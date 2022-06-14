@@ -4,12 +4,12 @@ import numpy as np
 np.random.seed(1234)
 from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pylab as plt
-
+import ruptures as rpt
 
 
 # Model Monitoring Utils
-def generate_vlm_display(df, pdf_file, percentiles = [25,50,75]):
-
+def generate_vlm_display(dfin, pdf_file, percentiles = [25,50,75]):
+    df = dfin.copy()
     pdf_pages = PdfPages(pdf_file)
     nx,ny = np.shape(df)
     for i in range(ny):
@@ -48,6 +48,31 @@ def generate_vlm_display(df, pdf_file, percentiles = [25,50,75]):
     pdf_pages.close()
 
 
+def calculate_change_points(dfin, percentiles= [25,50,75]):
+    df = dfin.copy()
+    nx,ny = np.shape(df)
+    df_cp = pd.DataFrame({})
+    for i in range(ny):
+        feature_name = df.columns[i]
+        x = df.index
+        y = df[feature_name].values
+        algo = rpt.Pelt(model="rbf").fit(y)
+        result = algo.predict(pen=10)
+        idxlo = 0
+        for r in result:
+            if r == nx:
+                continue
+            yn = y[idxlo:r]
+            y_pc = np.percentile(yn,percentiles)
+            idxlo = r
+            dfn = pd.DataFrame({'feature_name':[feature_name],'datetime':[x[r]],'percentile':[percentiles],'value':[y_pc]})
+            df_cp = pd.concat([df_cp, dfn])
+            
+    df_cp['datetime']=pd.to_datetime(df_cp['datetime']).dt.date
+    df_cp = df_cp.set_index(['feature_name','datetime']).apply(pd.Series.explode).reset_index()
+    return df_cp
+    
+    
     
 if __name__ == '__main__':
 
@@ -81,7 +106,7 @@ if __name__ == '__main__':
     
     
     ## Change-point detection
-    
+    df_cp = calculate_change_points(df, percentiles= [25,50,75])
     
     
     ## Monitoring Output
