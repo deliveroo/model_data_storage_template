@@ -38,6 +38,11 @@ def generate_vlm_display(dfin, pdf_file, percentiles = [25,50,75], change_points
         ax1.axhline(y_percentiles[1],ls='--',color='k')
         ax1.axhline(y_percentiles[2],ls=':',color='k')
         
+        # add change points
+        if change_points is not None:
+            cpnow = change_points[change_points['
+        
+        # titles
         ax1.set_title(feature_name)
         ax1.legend()
         plt.grid()
