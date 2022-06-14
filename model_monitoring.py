@@ -6,39 +6,8 @@ from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pylab as plt
 
 
-# Ingest model input features data pull (previous-1yr)
-#
-#
-#
-## this is just a template so create some synthetic data here
-n_features = 7
-n_history = 365
-end_date = pd.Timestamp.today().date()
-start_date = end_date - pd.Timedelta(str(int(n_history-1))+'D')
-dates = pd.date_range(start_date, end_date, freq='1d')
-X = np.random.randn(n_history,n_features)
 
-## inject artificial feature offsets
-offsets = 5*np.random.randn(n_features)
-X = X + offsets
-
-## inject artifical trend
-idx_trend_feature = 4
-idx_trend_start = int(n_history/2)
-idx_trend_end = int(3/4*n_history)
-trend = 0.1*(np.arange(n_history) - idx_trend_start) + X[idx_trend_start,idx_trend_feature]
-trend[:idx_trend_start]=0
-trend[idx_trend_end:]=trend[idx_trend_end]
-X[:, idx_trend_feature] += trend 
-df = pd.DataFrame(X,columns = ['feature_'+str(i) for i in range(n_features)])
-df.index = dates
-
-
-## change point detection
-
-
-
-## Monitoring Output
+# Model Monitoring Utils
 def generate_vlm_display(df, pdf_file, percentiles = [25,50,75]):
 
     pdf_pages = PdfPages(pdf_file)
@@ -77,13 +46,51 @@ def generate_vlm_display(df, pdf_file, percentiles = [25,50,75]):
         pdf_pages.savefig(fig)
     
     pdf_pages.close()
+
+
+    
+if __name__ == '__main__':
+
+    # Ingest model input features data pull (previous-1yr)
+    #
+    #
+    #
+    ## this is just a template so create some synthetic data here
+    n_features = 7
+    n_history = 365
+    end_date = pd.Timestamp.today().date()
+    start_date = end_date - pd.Timedelta(str(int(n_history-1))+'D')
+    dates = pd.date_range(start_date, end_date, freq='1d')
+    X = np.random.randn(n_history,n_features)
+    ## inject artificial feature offsets
+    offsets = 5*np.random.randn(n_features)
+    X = X + offsets
+    ## inject artifical trend
+    idx_trend_feature = 4
+    idx_trend_start = int(n_history/2)
+    idx_trend_end = int(3/4*n_history)
+    trend = 0.1*(np.arange(n_history) - idx_trend_start) + X[idx_trend_start,idx_trend_feature]
+    trend[:idx_trend_start]=0
+    trend[idx_trend_end:]=trend[idx_trend_end]
+    X[:, idx_trend_feature] += trend 
+    df = pd.DataFrame(X,columns = ['feature_'+str(i) for i in range(n_features)])
+    df.index = dates
     
     
-pdf_file = './img/variable_level_monitoring.pdf'
-generate_vlm_display(df, pdf_file, percentiles = [25,50,75])
-
-
-
-
-
-
+    
+    
+    
+    ## Change-point detection
+    
+    
+    
+    ## Monitoring Output
+    pdf_file = './img/variable_level_monitoring.pdf'
+    generate_vlm_display(df, pdf_file, percentiles = [25,50,75])
+    
+    
+    
+    
+    
+    
+    
