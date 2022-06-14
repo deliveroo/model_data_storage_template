@@ -8,7 +8,7 @@ import ruptures as rpt
 
 
 # Model Monitoring Utils
-def generate_vlm_display(dfin, pdf_file, percentiles = [25,50,75]):
+def generate_vlm_display(dfin, pdf_file, percentiles = [25,50,75], change_points = None):
     df = dfin.copy()
     pdf_pages = PdfPages(pdf_file)
     nx,ny = np.shape(df)
