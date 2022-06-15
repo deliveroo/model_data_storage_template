@@ -81,14 +81,16 @@ The ruptures package uses a technique known as Pruned Exact Linear Time ([PELT](
 ![Alt Text](https://github.com/dstarkey1/model_data_storage_template/blob/main/img/trend_example.png)
 
 ### Data Drops
-![Alt Text](https://github.com/dstarkey1/model_data_storage_template/blob/main/img/volatility_example.png)
+
+![Alt Text](https://github.com/dstarkey1/model_data_storage_template/blob/main/img/dropoff.png)
+
 
 
 ### UPGRADE: Volatility Changes
 
 The PELT technique in practice appears to fail here due to the absence of a level change. We can however clearly see large volatility changes to the underlying population behaviour. We can modify the ruptures technique to instead analyse the rolling standard deviation. While this requires an additional hyper parameter (the window size and additional split penalty), we see the algorithm now has the ability to identify volaitility changes. 
 
-![Alt Text](https://github.com/dstarkey1/model_data_storage_template/blob/main/img/dropoff.png)
+![Alt Text](https://github.com/dstarkey1/model_data_storage_template/blob/main/img/volatility_example.png)
 
 
 
