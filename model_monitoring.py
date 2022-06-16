@@ -70,7 +70,8 @@ def generate_vlm_display(dfin:pd.DataFrame, pdf_file:str,
         # add change points
         str_pc0 = '\n'
         if change_points is not None:
-            cpnow = change_points[change_points['feature_name']==feature_name]
+            change_points_dropna = change_points.dropna()
+            cpnow = change_points_dropna[change_points_dropna['feature_name']==feature_name]
             ncp = len(cpnow)
             if ncp > 1:
                 str_pc0 = str(int(ncp-1))+' change points detected\n'
@@ -93,7 +94,7 @@ def generate_vlm_display(dfin:pd.DataFrame, pdf_file:str,
         #show percentiles
         if percentile_lines:
             if change_points is not None:
-                cpnow = change_points[change_points['feature_name']==feature_name]
+                cpnow = change_points_dropna[change_points_dropna['feature_name']==feature_name]
                 if len(cpnow) > 0:
                     continue
             ax1.axhline(y_percentiles[0],ls=':',color='k')
@@ -111,7 +112,7 @@ def generate_vlm_display(dfin:pd.DataFrame, pdf_file:str,
         
     # save change point data to pdf
     if change_points is not None:
-        df_cp3 = drop_end_changepoints(change_points)
+        df_cp3 = drop_end_changepoints(change_points_dropna)
         if len(df_cp3)>0:
             fig = plt.figure()
             fig.suptitle('VLM Change Point Summary')
@@ -153,9 +154,31 @@ def calculate_change_points(dfin:pd.DataFrame,
     nx,ny = np.shape(df)
     df_cp = pd.DataFrame({})
     for i in range(ny):
+        
         feature_name = df.columns[i]
         x = df.index
         y = df[feature_name].values
+        
+        
+        
+        #identify nans
+        idx_nan = np.where(y!=y)[0]
+        x_nan = list(x[idx_nan])
+        dfn = pd.DataFrame({'feature_name':[feature_name]*len(x_nan),'datetime':x_nan,'percentile':[np.nan]*len(x_nan),'value':[np.nan]*len(x_nan),'description':['NaN']*len(x_nan)})
+        df_cp = pd.concat([df_cp, dfn])
+        
+        
+        #indentify infs
+        idx_inf = np.where(np.isinf(y))[0]
+        x_inf = list(x[idx_inf])
+        dfn = pd.DataFrame({'feature_name':[feature_name]*len(x_inf),'datetime':x_inf,'percentile':[np.nan]*len(x_nan),'value':[np.nan]*len(x_inf),'description':['Inf']*len(x_inf)})
+        df_cp = pd.concat([df_cp, dfn])
+        
+        #remove these for trend bit
+        ys = pd.Series(y)
+        ys.iloc[idx_inf]=np.nan
+        y = ys.fillna(method='ffill').values
+        
         algo = rpt.Pelt(model="rbf").fit(y)
         result = algo.predict(pen=10)
         
@@ -176,9 +199,13 @@ def calculate_change_points(dfin:pd.DataFrame,
             yn = y[idxlo:r]
             y_pc = np.percentile(yn,percentiles)
             idxlo = r
-            dfn = pd.DataFrame({'feature_name':[feature_name],'datetime':[x[min(nx-1,r)]],'percentile':[percentiles],'value':[y_pc]})
+            dfn = pd.DataFrame({'feature_name':[feature_name],'datetime':[x[min(nx-1,r)]],'percentile':[percentiles],'value':[y_pc],'description':['trend/volatility']})
             df_cp = pd.concat([df_cp, dfn])
+        
+        
+        
             
+    
     df_cp['datetime']=pd.to_datetime(df_cp['datetime']).dt.date
     
     if keep_last_changepoint is False:
@@ -188,7 +215,8 @@ def calculate_change_points(dfin:pd.DataFrame,
         df_cp = df_cp.set_index(['feature_name','datetime']).apply(pd.Series.explode).reset_index()
         
     
-    return df_cp
+    
+    return df_cp.reset_index(drop=True)
     
     
     
@@ -216,6 +244,11 @@ if __name__ == '__main__':
     trend[:idx_trend_start]=0
     trend[idx_trend_end:]=trend[idx_trend_end]
     X[:, idx_trend_feature] += trend 
+    
+    
+    #Add nans and infinities
+    X[10:12,3]=np.nan
+    X[40:42,3] = np.inf
     
     
     ## simulate dead-period
