@@ -7,12 +7,47 @@ import matplotlib.pylab as plt
 import ruptures as rpt
 
 
+
+def drop_end_changepoints(change_points:pd.DataFrame,explode=True,keep_percentiles=[25,50,75])->pd.DataFrame:
+    '''
+    Drop artifical changepoints at end of timeseries
+    
+    INPUTS: change_points: pd.dataframe output of calculate_changepoints
+    
+    OUTPUTS: dfcp: pd.DataFrame output with end of file change points dropped
+    '''
+    df_cp = change_points.copy()
+    df_cp1 = df_cp.set_index(['feature_name','datetime'])
+    df_cp2 = df_cp.drop_duplicates(subset='feature_name',keep='last').set_index(['feature_name','datetime'])
+    df_cp3 = df_cp1.drop(df_cp2.index).round(2).reset_index()
+    if explode:
+        df_cp3 = df_cp3.set_index(['feature_name','datetime']).apply(pd.Series.explode).reset_index()
+        df_cp3 = df_cp3[df_cp3['percentile'].isin(keep_percentiles)]
+    return df_cp3.reset_index(drop=True)
+
+
+
+
 # Model Monitoring Utils
-def generate_vlm_display(dfin, pdf_file, 
-                         percentiles = [25,50,75], 
-                         percentile_lines=False, 
+def generate_vlm_display(dfin:pd.DataFrame, pdf_file:str, 
+                         percentiles:list = [25,50,75], 
+                         percentile_lines:bool=False, 
                          change_points = None,
-                         change_point_percentile_lines=True):
+                         change_point_percentile_lines:bool=True):
+    """
+    Visualise the results of variable level monitoring. Creates a multi page pdf with vlm timeseries plots (one per page) and optiona change points overlaid.
+    
+    INPUTS:
+    dfin: Input dataframe of timeseries features
+    pdf_file: The output filename to save the multipage pdf
+    percentiles: The percentiles to draw on the charts
+    percentile_lines: bool. Do we show percentiles?
+    change_points: None or pd.dataframe output of the change point analysis in the calculate_change_points function
+    change_point_percentile_lines: bool. Do we show change point percentiles for each change point split?
+    
+    OUTPUT:
+    None
+    """
     df = dfin.copy()
     pdf_pages = PdfPages(pdf_file)
     nx,ny = np.shape(df)
@@ -76,12 +111,7 @@ def generate_vlm_display(dfin, pdf_file,
         
     # save change point data to pdf
     if change_points is not None:
-        df_cp = change_points.copy()
-        df_cp1 = df_cp.set_index(['feature_name','datetime'])
-        df_cp2 = df_cp.drop_duplicates(subset='feature_name',keep='last').set_index(['feature_name','datetime'])
-        df_cp3 = df_cp1.drop(df_cp2.index).round(2).reset_index()
-        df_cp3 = df_cp3.set_index(['feature_name','datetime']).apply(pd.Series.explode).reset_index()
-        df_cp3 = df_cp3[df_cp3['percentile']==df_cp3['percentile'].unique()[1]]
+        df_cp3 = drop_end_changepoints(change_points)
         if len(df_cp3)>0:
             fig = plt.figure()
             fig.suptitle('VLM Change Point Summary')
@@ -97,7 +127,28 @@ def generate_vlm_display(dfin, pdf_file,
     pdf_pages.close()
 
 
-def calculate_change_points(dfin, percentiles= [25,50,75], explode=True, trend_penalty = 10, rolling_sd_window = 10, rolling_sd_penalty=10):
+def calculate_change_points(dfin:pd.DataFrame, 
+                            percentiles:list= [25,50,75], 
+                            explode:bool=True,
+                            keep_last_changepoint=True,
+                            trend_penalty:int = 10, 
+                            rolling_sd_window:int = 10, 
+                            rolling_sd_penalty:int=10)->pd.DataFrame:
+    """
+    Calculate change points in a dataframe of timeseries data
+    INPUTS:
+    dfin: Input pandas dataframe
+    percentiles: Percentiles to report levels
+    explode = boolean explode the percentiles in the output dataframe or keep as list form
+    keep_last_changepoint = False, bbyu default changepoint analysis keeps the last point in the timeseries regardless of any changepoints. Useful for plotting in the generate_vlm_display function but less useful for clarity
+    trend_penalty = 10 default ruptures change point sensitivity parameter, lower means more change points identified but introduces noise
+    rolling_sd_window: set to None else sets the window for standard deviation anomaly detection to identify timeseries whose levels may not change but with periods of variable volatility
+    rolling_sd_penalty: as with trend_penalty but for the rolling sd anomaly detection
+    
+    OUTPUT:
+    df_cp: pandas dataframe of change points
+    
+    """
     df = dfin.copy()
     nx,ny = np.shape(df)
     df_cp = pd.DataFrame({})
@@ -129,8 +180,14 @@ def calculate_change_points(dfin, percentiles= [25,50,75], explode=True, trend_p
             df_cp = pd.concat([df_cp, dfn])
             
     df_cp['datetime']=pd.to_datetime(df_cp['datetime']).dt.date
+    
+    if keep_last_changepoint is False:
+        df_cp = drop_end_changepoints(df_cp)
+    
     if explode:
         df_cp = df_cp.set_index(['feature_name','datetime']).apply(pd.Series.explode).reset_index()
+        
+    
     return df_cp
     
     
@@ -175,22 +232,18 @@ if __name__ == '__main__':
     X[idx_trend_start:idx_trend_end, idx_trend_feature] = (X[idx_trend_start:idx_trend_end, idx_trend_feature] - xm)*10 + xm
     
     
-    
-    
+    # create feature dataframe 
     df = pd.DataFrame(X,columns = ['feature_'+str(i) for i in range(n_features)])
     df.index = dates
     
     
-    
-    
-    
     ## Change-point detection
-    df_cp = calculate_change_points(df, percentiles= [25,50,75],explode=False)
-    
+    change_points_for_chart = calculate_change_points(df, percentiles= [25,50,75],explode=False)
+    change_points = drop_end_changepoints(change_points_for_chart,explode=False)
     
     ## Monitoring Output
     pdf_file = './img/variable_level_monitoring.pdf'
-    generate_vlm_display(df, pdf_file, percentiles = [25,50,75], change_points=df_cp)
+    generate_vlm_display(df, pdf_file, percentiles = [25,50,75], change_points=change_points_for_chart)
     
     
     
