@@ -76,6 +76,7 @@ def generate_vlm_display(dfin, pdf_file,
         
     # save change point data to pdf
     if change_points is not None:
+        df_cp = change_points.copy()
         df_cp1 = df_cp.set_index(['feature_name','datetime'])
         df_cp2 = df_cp.drop_duplicates(subset='feature_name',keep='last').set_index(['feature_name','datetime'])
         df_cp3 = df_cp1.drop(df_cp2.index).round(2).reset_index()
