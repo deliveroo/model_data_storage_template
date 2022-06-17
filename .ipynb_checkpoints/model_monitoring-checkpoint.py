@@ -84,12 +84,25 @@ def generate_vlm_display(dfin:pd.DataFrame, pdf_file:str,
                     ax1.axhline(ypc[0],ls=':',color='k')
                     ax1.axhline(ypc[1],ls='--',color='k')
                     ax1.axhline(ypc[2],ls=':',color='k')
+            
+            #add nan change points
+            change_points_nan = change_points[change_points['description'].isin(['NaN','Inf'])]
+            cpnow = change_points_nan[change_points_nan['feature_name']==feature_name]
+            for i3 in range(len(cpnow)):
+                datetime = cpnow['datetime'].iloc[i3]
+                if i3==0:
+                    lab = 'Bad Data'
+                else:
+                    lab=None
+                ax1.axvline(datetime,color='r',linewidth=2,label=lab,ls=':')
+            
                     
         str_pc = str_pc0+ str_pc1+'\n'+str_pc2
         
         label = feature_name+': '+ str_pc            
         ax1.plot(x, y,label=label,zorder=0)
         ax1.set_ylabel('value')
+        ax1.legend()
         
         #show percentiles
         if percentile_lines:
