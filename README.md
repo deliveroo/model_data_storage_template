@@ -122,9 +122,36 @@ This should also be added to the `requirents.txt` file of the git project curren
 
 `touch .pre-commit-config.yaml`
 
-This should be created in the project root directory.
+This should be created in the project root directory. Edit this file to include the following:
+
+```
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+    -   id: check-yaml
+    -   id: end-of-file-fixer
+    -   id: trailing-whitespace
+-   repo: https://github.com/psf/black
+    rev: 21.12b0
+    hooks:
+    -   id: black
+```
+
+Any number of auto pre commit processes can be defined in this .yaml file and tailored to the specific needs of the project.
 
 
 ##### 3. Install the git hook scripts
 
 `pre-commit install`
+
+
+
+##### 4. Commit to your project as normal
+
+All the pre commit processes defined in the yaml file will now run automatically every commit! An example commit push sequence will look like the following.
+
+![Alt Text](https://github.com/dstarkey1/model_data_storage_template/blob/main/img/example_precommit.png)
+
+
+We can see that the auto-formatting defined in the .yaml file now runs without prompt from the user.
