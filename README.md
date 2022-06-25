@@ -115,7 +115,7 @@ Finally, [pre-commit](https://pre-commit.com/) hooks are a great way to automate
 
 `pip install pre-commit`
 
-This should also be added to the `requirents.txt` file of the git project currently in use.
+This should also be added to the `requirements.txt` file of the git project currently in use.
 
 
 #### 2. create a file named .pre-commit-config.yaml
