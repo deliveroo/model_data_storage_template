@@ -105,20 +105,20 @@ Ideally, we sugget results of any VLM should be reported concisely in a single d
 
 # Pre-commit Hooks:
 
-As an asside, [pre-commit](https://pre-commit.com/) hooks are a great way to automate many of the standard tasks required to maintain code in a git repo. These include things such as auto-formatting code to a specific spacing requirements (i.e. using `python -m black ./*`). It can also cover things like running of unit tests. These standard maintenance and continuous integration tasks of a project.
+Finally, [pre-commit](https://pre-commit.com/) hooks are a great way to automate many of the standard tasks required to maintain code in a git repo. These include things such as auto-formatting code to a specific spacing requirements (i.e. using `python -m black ./*`). It can also cover things like running of unit tests. These standard maintenance and continuous integration tasks of a project.
 
 
 ## Installation Guide
 
 
-##### 1. Install pre-commit
+#### 1. Install pre-commit
 
 `pip install pre-commit`
 
 This should also be added to the `requirents.txt` file of the git project currently in use.
 
 
-##### 2. create a file named .pre-commit-config.yaml
+#### 2. create a file named .pre-commit-config.yaml
 
 `touch .pre-commit-config.yaml`
 
@@ -141,13 +141,13 @@ repos:
 Any number of auto pre commit processes can be defined in this .yaml file and tailored to the specific needs of the project.
 
 
-##### 3. Install the git hook scripts
+#### 3. Install the git hook scripts
 
 `pre-commit install`
 
 
 
-##### 4. Commit to your project as normal
+#### 4. Commit to your project as normal
 
 All the pre commit processes defined in the yaml file will now run automatically every commit! An example commit push sequence will look like the following.
 
